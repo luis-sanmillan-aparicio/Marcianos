@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Marcianitos - Control por Arrastre y Toque</title>
+    <title>Marcianitos - Adaptado a iPhone</title>
     <style>
         * {
             user-select: none;
             -webkit-tap-highlight-color: transparent;
-            touch-action: none; /* Previene scroll/zoom mientras se juega */
+            touch-action: none;
         }
 
         body {
@@ -19,7 +19,7 @@
             align-items: center;
             font-family: 'Courier New', 'VT323', monospace;
             margin: 0;
-            padding: 16px;
+            padding: 12px;
             touch-action: none;
         }
 
@@ -27,23 +27,30 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            width: 100%;
+            max-width: 100%;
         }
 
         .game-container {
             background: #000000aa;
-            border-radius: 32px;
-            padding: 16px 20px 20px 20px;
+            border-radius: 24px;
+            padding: 12px;
             box-shadow: 0 20px 35px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
             backdrop-filter: blur(2px);
+            width: 100%;
+            display: flex;
+            justify-content: center;
         }
 
         canvas {
             display: block;
             margin: 0 auto;
-            box-shadow: 0 0 0 4px #2ecc71, 0 0 0 8px #0f380f;
+            box-shadow: 0 0 0 3px #2ecc71, 0 0 0 6px #0f380f;
             border-radius: 8px;
             cursor: none;
-            touch-action: none;  /* Importante para capturar arrastres */
+            touch-action: none;
+            width: 100%;
+            height: auto;
         }
 
         .info-panel {
@@ -51,11 +58,11 @@
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 12px;
-            margin-top: 18px;
+            gap: 10px;
+            margin-top: 15px;
             background: #0c0f1cbb;
             backdrop-filter: blur(4px);
-            padding: 8px 18px;
+            padding: 8px 16px;
             border-radius: 60px;
             border: 1px solid #2ecc7133;
             color: #c0ffc0;
@@ -64,10 +71,10 @@
         }
 
         .score, .lives {
-            font-size: 26px;
-            letter-spacing: 2px;
+            font-size: 20px;
+            letter-spacing: 1px;
             background: #00000066;
-            padding: 4px 16px;
+            padding: 4px 12px;
             border-radius: 40px;
             display: inline-block;
         }
@@ -77,8 +84,8 @@
             border: none;
             font-family: 'Courier New', monospace;
             font-weight: bold;
-            font-size: 20px;
-            padding: 6px 18px;
+            font-size: 16px;
+            padding: 5px 14px;
             border-radius: 60px;
             cursor: pointer;
             color: #0a0f1f;
@@ -92,23 +99,22 @@
         }
         
         .controls-tip {
-            font-size: 15px;
+            font-size: 12px;
             background: #000000aa;
-            padding: 8px 18px;
+            padding: 6px 12px;
             border-radius: 50px;
             display: inline-block;
             text-align: center;
-            margin-top: 12px;
+            margin-top: 10px;
             backdrop-filter: blur(4px);
             font-weight: bold;
-            letter-spacing: 1px;
         }
         
-        @media (max-width: 780px) {
-            .game-container { padding: 12px; }
-            .score, .lives { font-size: 20px; }
-            .restart-btn { font-size: 16px; padding: 4px 14px; }
-            .controls-tip { font-size: 13px; }
+        @media (max-width: 550px) {
+            body { padding: 8px; }
+            .score, .lives { font-size: 16px; padding: 3px 10px; }
+            .restart-btn { font-size: 14px; padding: 4px 12px; }
+            .controls-tip { font-size: 10px; }
         }
     </style>
 </head>
@@ -116,29 +122,65 @@
 <div class="game-wrapper">
     <div class="game-container">
         <canvas id="gameCanvas" width="800" height="600"></canvas>
-        <div class="info-panel">
-            <div class="score">💥 PUNTOS: <span id="scoreValue">0</span></div>
-            <div class="lives">🛸 VIDAS: <span id="livesValue">3</span></div>
-            <button class="restart-btn" id="restartButton">🔄 NAVE NUEVA</button>
-        </div>
-        <div class="controls-tip">
-            🎮 ARRASTRA el dedo → Mueve la nave &nbsp;&nbsp;|&nbsp;&nbsp; 👆 TOCA EN CUALQUIER LUGAR → Disparo láser
-        </div>
+    </div>
+    <div class="info-panel">
+        <div class="score">💥 PUNTOS: <span id="scoreValue">0</span></div>
+        <div class="lives">🛸 VIDAS: <span id="livesValue">3</span></div>
+        <button class="restart-btn" id="restartButton">🔄 NAVE NUEVA</button>
+    </div>
+    <div class="controls-tip">
+        🎮 ARRASTRA el dedo → Mueve la nave &nbsp;&nbsp;|&nbsp;&nbsp; 👆 TOCA EN CUALQUIER LUGAR → Disparo
     </div>
 </div>
 
 <script>
     (function(){
-        // ---------- CANVAS ----------
+        // ---------- CANVAS Y ESCALADO ----------
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-
+        
+        // Dimensiones lógicas del juego (siempre 800x600 internamente)
+        const LOGIC_W = 800;
+        const LOGIC_H = 600;
+        
+        let scale = 1;      // escala actual
+        let offsetX = 0;     // offset para centrar en pantalla (si hay bordes)
+        
+        // Función que redimensiona el canvas para que quepa en cualquier pantalla manteniendo proporción
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            const maxWidth = container.clientWidth - 4;  // pequeño margen
+            const maxHeight = window.innerHeight * 0.7;  // no exceder la altura visible
+            
+            // Calcular escala manteniendo proporción 800/600 = 1.333
+            let newScale = Math.min(maxWidth / LOGIC_W, maxHeight / LOGIC_H);
+            newScale = Math.max(0.4, Math.min(1.2, newScale)); // límites razonables
+            
+            const newWidth = LOGIC_W * newScale;
+            const newHeight = LOGIC_H * newScale;
+            
+            canvas.style.width = `${newWidth}px`;
+            canvas.style.height = `${newHeight}px`;
+            canvas.width = LOGIC_W;
+            canvas.height = LOGIC_H;
+            
+            scale = newScale;
+            // Calcular offset para centrar horizontalmente si es necesario (normalmente sobra espacio)
+            const containerRect = container.getBoundingClientRect();
+            const canvasRect = canvas.getBoundingClientRect();
+            offsetX = (containerRect.width - canvasRect.width) / 2;
+            if(offsetX < 0) offsetX = 0;
+        }
+        
+        // Escuchar cambios de orientación y resize
+        window.addEventListener('resize', () => { resizeCanvas(); });
+        window.addEventListener('orientationchange', () => { setTimeout(resizeCanvas, 50); });
+        
         // ---------- CONSTANTES DE JUEGO ----------
-        const W = 800, H = 600;
         const PLAYER_WIDTH = 36;
         const PLAYER_HEIGHT = 24;
-        let playerX = W/2 - PLAYER_WIDTH/2;
-        const playerY = H - 55;
+        let playerX = LOGIC_W/2 - PLAYER_WIDTH/2;
+        const playerY = LOGIC_H - 55;
         let lives = 3;
         let score = 0;
         let gameOver = false;
@@ -149,7 +191,7 @@
         const BULLET_H = 12;
         const BULLET_SPEED = -6;
         let shotCooldown = 0;
-        const SHOT_DELAY_FRAMES = 10;  // cadencia rápida pero justa
+        const SHOT_DELAY_FRAMES = 10;
 
         // ----- MARCIANITOS -----
         const INVADER_ROWS = 5;
@@ -160,7 +202,6 @@
         const INVADER_BASE_SPEED = 28;
         let invaderSpeed = INVADER_BASE_SPEED;
         
-        // Desplazamiento de invasores (para movimiento lateral y bajada)
         let invaderOffsetX = 0;
         let invaderOffsetY = 0;
         
@@ -172,30 +213,22 @@
         let enemyShootCooldown = 0;
         const ENEMY_SHOOT_DELAY_BASE = 38;
         
-        // Efectos visuales
         let explosionFrames = [];
         
         // ---------- CONTROL TÁCTIL: ARRASTRE Y TOQUE ----------
-        let touchActive = false;      // Si el dedo está deslizando sobre el canvas
-        let lastTouchX = 0;           // Última posición X del toque (para arrastre diferencial)
-        
-        // Disparo por toque (sin arrastre, simplemente tocar)
+        let touchActive = false;
+        let lastTouchX = 0;
         let pendingShoot = false;
         
-        // También mantenemos compatibilidad con teclado por si alguien juega en PC
-        const keys = {
-            ArrowLeft: false,
-            ArrowRight: false,
-            Space: false
-        };
+        // Teclado (PC)
+        const keys = { ArrowLeft: false, ArrowRight: false, Space: false };
         
-        // ---------- FUNCIONES AUX ----------
+        // Funciones auxiliares
         function updateUI() {
             document.getElementById('scoreValue').innerText = score;
             document.getElementById('livesValue').innerText = lives;
         }
         
-        // Obtener posición real de cada invasor según offset dinámico
         function getInvaderPos(col, row) {
             const baseX = 70;
             const baseY = 70;
@@ -209,12 +242,11 @@
             };
         }
         
-        // Reinicio completo del juego
         function restartGame() {
             gameOver = false;
             lives = 3;
             score = 0;
-            playerX = W/2 - PLAYER_WIDTH/2;
+            playerX = LOGIC_W/2 - PLAYER_WIDTH/2;
             bullets = [];
             enemyBullets = [];
             explosionFrames = [];
@@ -226,7 +258,6 @@
             invaderOffsetX = 0;
             invaderOffsetY = 0;
             
-            // Reiniciar matriz de invasores (todos vivos)
             invaders = [];
             for(let row = 0; row < INVADER_ROWS; row++) {
                 invaders[row] = [];
@@ -237,7 +268,6 @@
             updateUI();
         }
         
-        // Disparo del jugador
         function shootFromPlayer() {
             if(gameOver) return;
             if(shotCooldown > 0) return;
@@ -250,7 +280,6 @@
             shotCooldown = SHOT_DELAY_FRAMES;
         }
         
-        // Disparo enemigo desde un invasor aleatorio vivo
         function enemyShoot() {
             if(gameOver) return;
             let aliveList = [];
@@ -273,7 +302,6 @@
             });
         }
         
-        // Colisión rectángulos
         function rectCollide(r1, r2) {
             return !(r2.x > r1.x + r1.w ||
                 r2.x + r2.w < r1.x ||
@@ -281,44 +309,51 @@
                 r2.y + r2.h < r1.y);
         }
         
-        // Lógica principal del juego (movimiento, colisiones, etc.)
+        // Conversión de coordenadas de pantalla a lógicas (para el arrastre)
+        function screenToLogicX(clientX) {
+            const rect = canvas.getBoundingClientRect();
+            // Calculamos la posición relativa dentro del canvas visual
+            const relativeX = (clientX - rect.left) / rect.width;
+            // Convertimos a coordenadas lógicas (0 a LOGIC_W)
+            let logicX = relativeX * LOGIC_W;
+            return Math.min(Math.max(logicX, 0), LOGIC_W);
+        }
+        
+        // Lógica principal del juego
         function updateGame() {
             if(gameOver) return;
             
-            // Cooldowns
             if(shotCooldown > 0) shotCooldown--;
             if(enemyShootCooldown > 0) enemyShootCooldown--;
             
-            // ----- MOVIMIENTO DE LA NAVE (por teclado o por arrastre táctil) -----
-            // El arrastre táctil se maneja en eventos aparte, modificando playerX directamente.
-            // Para teclado:
+            // Movimiento por teclado (PC)
             let move = 0;
             if(keys.ArrowLeft) move = -1;
             if(keys.ArrowRight) move = 1;
             if(move !== 0) {
                 let speed = 7;
                 let newX = playerX + move * speed;
-                if(newX >= 5 && newX <= W - PLAYER_WIDTH - 5) {
+                if(newX >= 5 && newX <= LOGIC_W - PLAYER_WIDTH - 5) {
                     playerX = newX;
                 }
             }
             
-            // Disparo: por tecla espacio o por evento táctil de toque (pendingShoot)
+            // Disparo: espacio o toque
             if((keys.Space || pendingShoot) && shotCooldown === 0 && !gameOver) {
                 shootFromPlayer();
-                pendingShoot = false;  // consumir el disparo táctil
+                pendingShoot = false;
             }
             
-            // Mover balas del jugador
+            // Mover balas jugador
             for(let i=0; i<bullets.length; i++) {
                 bullets[i].y += BULLET_SPEED;
-                if(bullets[i].y + BULLET_H < 0 || bullets[i].y > H) {
+                if(bullets[i].y + BULLET_H < 0 || bullets[i].y > LOGIC_H) {
                     bullets.splice(i,1);
                     i--;
                 }
             }
             
-            // COLISIONES balas vs invasores
+            // Colisiones balas vs invasores
             for(let i=0; i<bullets.length; i++) {
                 const bullet = bullets[i];
                 let hit = false;
@@ -347,7 +382,6 @@
                 }
             }
             
-            // Contar invasores vivos
             let aliveCount = 0;
             for(let row=0; row<INVADER_ROWS; row++)
                 for(let col=0; col<INVADER_COLS; col++)
@@ -358,7 +392,7 @@
                 return;
             }
             
-            // Movimiento de invasores (con offset)
+            // Movimiento invasores
             if(moveWait <= 0) {
                 let minX = 9999, maxX = -9999;
                 for(let row=0; row<INVADER_ROWS; row++) {
@@ -371,7 +405,7 @@
                     }
                 }
                 let needStepDown = false;
-                if(invaderDirection === 1 && maxX >= W - 20) {
+                if(invaderDirection === 1 && maxX >= LOGIC_W - 20) {
                     invaderDirection = -1;
                     needStepDown = true;
                 } else if(invaderDirection === -1 && minX <= 15) {
@@ -387,7 +421,6 @@
                 }
                 moveWait = invaderSpeed;
                 
-                // Derrota si los invasores alcanzan la base del jugador
                 for(let row=0; row<INVADER_ROWS; row++) {
                     for(let col=0; col<INVADER_COLS; col++) {
                         if(invaders[row][col]) {
@@ -403,16 +436,14 @@
                 moveWait--;
             }
             
-            // Disparos enemigos periódicos
             if(enemyShootCooldown === 0 && aliveCount > 0 && !gameOver) {
                 enemyShoot();
                 enemyShootCooldown = ENEMY_SHOOT_DELAY_BASE + Math.floor(Math.random() * 15);
             }
             
-            // Mover balas enemigas y colisión con el jugador
             for(let i=0; i<enemyBullets.length; i++) {
                 enemyBullets[i].y += ENEMY_BULLET_SPEED;
-                if(enemyBullets[i].y > H + 50 || enemyBullets[i].y + ENEMY_BULLET_H < 0) {
+                if(enemyBullets[i].y > LOGIC_H + 50 || enemyBullets[i].y + ENEMY_BULLET_H < 0) {
                     enemyBullets.splice(i,1);
                     i--;
                     continue;
@@ -428,12 +459,11 @@
                         gameOver = true;
                     } else {
                         explosionFrames.push({x: playerX+PLAYER_WIDTH/2, y: playerY+PLAYER_HEIGHT/2, timer: 12});
-                        playerX = W/2 - PLAYER_WIDTH/2; // reubicar nave al centro tras impacto
+                        playerX = LOGIC_W/2 - PLAYER_WIDTH/2;
                     }
                 }
             }
             
-            // Actualizar explosiones visuales
             for(let i=0; i<explosionFrames.length; i++) {
                 explosionFrames[i].timer--;
                 if(explosionFrames[i].timer <= 0) {
@@ -443,18 +473,16 @@
             }
         }
         
-        // ---------- DIBUJO DEL JUEGO (estilo retro) ----------
+        // Dibujo (coordenadas lógicas)
         function draw() {
-            ctx.clearRect(0, 0, W, H);
-            // Fondo espacial
+            ctx.clearRect(0, 0, LOGIC_W, LOGIC_H);
             ctx.fillStyle = "#010008";
-            ctx.fillRect(0,0,W,H);
+            ctx.fillRect(0,0,LOGIC_W,LOGIC_H);
             ctx.fillStyle = "#ffffff";
             for(let i=0; i<180; i++) {
-                ctx.fillRect( (i*211)%W, (i*97)%H, 1.5, 1.5);
+                ctx.fillRect( (i*211)%LOGIC_W, (i*97)%LOGIC_H, 1.5, 1.5);
             }
             
-            // Nave del jugador (verde brillante)
             ctx.fillStyle = "#4eff6e";
             ctx.fillRect(playerX, playerY, PLAYER_WIDTH, PLAYER_HEIGHT);
             ctx.fillStyle = "#b3ffb3";
@@ -462,12 +490,10 @@
             ctx.fillStyle = "#ffffff";
             ctx.fillRect(playerX+14, playerY-3, 8, 5);
             
-            // Marcianos (con offset dinámico)
             for(let row=0; row<INVADER_ROWS; row++) {
                 for(let col=0; col<INVADER_COLS; col++) {
                     if(invaders[row][col]) {
                         const pos = getInvaderPos(col, row);
-                        // Colores diferentes por fila
                         if(row===0) ctx.fillStyle = "#ffc857";
                         else if(row===1) ctx.fillStyle = "#7eff6e";
                         else ctx.fillStyle = "#40c94b";
@@ -483,13 +509,11 @@
                 }
             }
             
-            // Balas
             ctx.fillStyle = "#ffff60";
             for(let b of bullets) ctx.fillRect(b.x, b.y, BULLET_W, BULLET_H);
             ctx.fillStyle = "#ff5555";
             for(let eb of enemyBullets) ctx.fillRect(eb.x, eb.y, ENEMY_BULLET_W, ENEMY_BULLET_H);
             
-            // Explosiones
             for(let ex of explosionFrames) {
                 ctx.fillStyle = `rgba(255, 140, 30, ${ex.timer/8})`;
                 ctx.beginPath();
@@ -501,20 +525,19 @@
                 ctx.fill();
             }
             
-            // Mensajes de estado final
             if(gameOver) {
                 let aliveCount = 0;
                 for(let row=0; row<INVADER_ROWS; row++)
                     for(let col=0; col<INVADER_COLS; col++)
                         if(invaders[row][col]) aliveCount++;
                 let msg = (aliveCount === 0) ? "🌟 ¡VICTORIA! 🌟" : "💀 GAME OVER 💀";
-                ctx.font = "bold 34monospace";
+                ctx.font = "bold 34px monospace";
                 ctx.fillStyle = "#fffdd0";
                 ctx.shadowColor = "black";
-                ctx.fillText(msg, W/2-130, H/2-40);
+                ctx.fillText(msg, LOGIC_W/2-130, LOGIC_H/2-40);
                 ctx.font = "18px monospace";
                 ctx.fillStyle = "#aaffaa";
-                ctx.fillText("Presiona 'NUEVA NAVE'", W/2-100, H/2+30);
+                ctx.fillText("Presiona 'NUEVA NAVE'", LOGIC_W/2-100, LOGIC_H/2+30);
             }
             
             ctx.font = "bold 16px monospace";
@@ -522,129 +545,87 @@
             ctx.fillText("👾 INVASORES", 20, 35);
         }
         
-        // ---------- EVENTOS: ARRASTRE Y TOQUE (el corazón del control táctil) ----------
-        function handleTouchStart(e) {
-            e.preventDefault();
-            const rect = canvas.getBoundingClientRect();
-            const scaleX = canvas.width / rect.width;
-            let touchX = (e.touches[0].clientX - rect.left) * scaleX;
-            touchX = Math.min(Math.max(touchX, 5), W - PLAYER_WIDTH - 5);
-            // Colocar la nave directamente bajo el dedo al comenzar el arrastre
-            playerX = touchX - PLAYER_WIDTH/2;
-            playerX = Math.min(Math.max(playerX, 5), W - PLAYER_WIDTH - 5);
-            touchActive = true;
-            lastTouchX = touchX;
-        }
-        
-        function handleTouchMove(e) {
-            e.preventDefault();
-            if(!touchActive) return;
-            const rect = canvas.getBoundingClientRect();
-            const scaleX = canvas.width / rect.width;
-            let currentTouchX = (e.touches[0].clientX - rect.left) * scaleX;
-            // Mover la nave proporcionalmente al arrastre
-            let delta = currentTouchX - lastTouchX;
-            let newX = playerX + delta;
-            newX = Math.min(Math.max(newX, 5), W - PLAYER_WIDTH - 5);
-            playerX = newX;
-            lastTouchX = currentTouchX;
-        }
-        
-        function handleTouchEnd(e) {
-            e.preventDefault();
-            touchActive = false;
-            // IMPORTANTE: Al levantar el dedo, si NO hubo arrastre significativo, consideramos un toque para disparar.
-            // Para distinguir toque vs arrastre: Si el tiempo fue muy corto y movimiento mínimo, disparamos.
-            // Usaremos un flag sencillo: Al iniciar toque registramos timestamp y posición, al soltar comparamos.
-            // Pero implementaremos disparo solo si no hubo movimiento relevante.
-            // Como hay eventos touchstart y touchend, lo haremos de forma elegante con variable.
-        }
-        
-        // Detectores de toque para disparo (toque sin arrastre) y arrastre simultáneo.
+        // ----- EVENTOS TÁCTILES CON COORDENADAS ADAPTADAS -----
         let touchStartTime = 0;
-        let touchStartX = 0;
-        let touchStartY = 0;
+        let touchStartLogicX = 0;
         let hasMovedSignificantly = false;
         
-        function onTouchStartGlobal(e) {
+        function onTouchStart(e) {
             e.preventDefault();
-            const rect = canvas.getBoundingClientRect();
-            const scaleX = canvas.width / rect.width;
-            const scaleY = canvas.height / rect.height;
-            let canvasX = (e.touches[0].clientX - rect.left) * scaleX;
-            let canvasY = (e.touches[0].clientY - rect.top) * scaleY;
+            const touch = e.touches[0];
+            const logicX = screenToLogicX(touch.clientX);
+            
             touchStartTime = Date.now();
-            touchStartX = canvasX;
-            touchStartY = canvasY;
+            touchStartLogicX = logicX;
             hasMovedSignificantly = false;
             
-            // También iniciamos arrastre directamente
-            handleTouchStart(e);
+            // Posicionar nave directamente bajo el dedo
+            let newPlayerX = logicX - PLAYER_WIDTH/2;
+            newPlayerX = Math.min(Math.max(newPlayerX, 5), LOGIC_W - PLAYER_WIDTH - 5);
+            playerX = newPlayerX;
+            touchActive = true;
+            lastTouchX = logicX;
         }
         
-        function onTouchMoveGlobal(e) {
+        function onTouchMove(e) {
             e.preventDefault();
-            const rect = canvas.getBoundingClientRect();
-            const scaleX = canvas.width / rect.width;
-            const scaleY = canvas.height / rect.height;
-            let currentX = (e.touches[0].clientX - rect.left) * scaleX;
-            let currentY = (e.touches[0].clientY - rect.top) * scaleY;
-            let dist = Math.hypot(currentX - touchStartX, currentY - touchStartY);
-            if(dist > 12) {
-                hasMovedSignificantly = true;
-            }
-            handleTouchMove(e);
+            if(!touchActive) return;
+            const touch = e.touches[0];
+            const logicX = screenToLogicX(touch.clientX);
+            let delta = logicX - lastTouchX;
+            if(Math.abs(delta) > 3) hasMovedSignificantly = true;
+            let newX = playerX + delta;
+            newX = Math.min(Math.max(newX, 5), LOGIC_W - PLAYER_WIDTH - 5);
+            playerX = newX;
+            lastTouchX = logicX;
         }
         
-        function onTouchEndGlobal(e) {
+        function onTouchEnd(e) {
             e.preventDefault();
-            handleTouchEnd(e);
-            // Si el dedo se levantó rápido y sin movimiento significativo → DISPARO
+            touchActive = false;
             let duration = Date.now() - touchStartTime;
+            // Si fue un toque rápido sin arrastre significativo → disparo
             if(!hasMovedSignificantly && duration < 200) {
                 pendingShoot = true;
             }
-            touchActive = false;
         }
         
-        // Registrar eventos táctiles en el canvas
-        canvas.addEventListener('touchstart', onTouchStartGlobal, {passive: false});
-        canvas.addEventListener('touchmove', onTouchMoveGlobal, {passive: false});
-        canvas.addEventListener('touchend', onTouchEndGlobal);
-        canvas.addEventListener('touchcancel', onTouchEndGlobal);
+        canvas.addEventListener('touchstart', onTouchStart, {passive: false});
+        canvas.addEventListener('touchmove', onTouchMove, {passive: false});
+        canvas.addEventListener('touchend', onTouchEnd);
+        canvas.addEventListener('touchcancel', onTouchEnd);
         
-        // Prevenir arrastres por defecto en el canvas también con mouse (para depuración PC)
-        canvas.addEventListener('dragstart', (e) => e.preventDefault());
-        
-        // También para mouse (opcional, para pruebas en PC: arrastrar con ratón y click dispara)
+        // Eventos de ratón para PC/pruebas
         let mouseDown = false;
         let mouseMoved = false;
         canvas.addEventListener('mousedown', (e) => {
             e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const relativeX = (e.clientX - rect.left) / rect.width;
+            let logicX = relativeX * LOGIC_W;
+            let newX = logicX - PLAYER_WIDTH/2;
+            newX = Math.min(Math.max(newX, 5), LOGIC_W - PLAYER_WIDTH - 5);
+            playerX = newX;
             mouseDown = true;
             mouseMoved = false;
-            const rect = canvas.getBoundingClientRect();
-            const scaleX = canvas.width / rect.width;
-            let mouseX = (e.clientX - rect.left) * scaleX;
-            playerX = Math.min(Math.max(mouseX - PLAYER_WIDTH/2, 5), W - PLAYER_WIDTH - 5);
         });
         canvas.addEventListener('mousemove', (e) => {
             if(mouseDown) {
                 mouseMoved = true;
                 const rect = canvas.getBoundingClientRect();
-                const scaleX = canvas.width / rect.width;
-                let mouseX = (e.clientX - rect.left) * scaleX;
-                playerX = Math.min(Math.max(mouseX - PLAYER_WIDTH/2, 5), W - PLAYER_WIDTH - 5);
+                const relativeX = (e.clientX - rect.left) / rect.width;
+                let logicX = relativeX * LOGIC_W;
+                let newX = logicX - PLAYER_WIDTH/2;
+                newX = Math.min(Math.max(newX, 5), LOGIC_W - PLAYER_WIDTH - 5);
+                playerX = newX;
             }
         });
         canvas.addEventListener('mouseup', (e) => {
-            if(mouseDown && !mouseMoved) {
-                pendingShoot = true;
-            }
+            if(mouseDown && !mouseMoved) pendingShoot = true;
             mouseDown = false;
         });
         
-        // Teclado (PC)
+        // Teclado
         window.addEventListener('keydown', (e) => {
             if(e.key === 'ArrowLeft') { keys.ArrowLeft = true; e.preventDefault(); }
             else if(e.key === 'ArrowRight') { keys.ArrowRight = true; e.preventDefault(); }
@@ -656,20 +637,14 @@
             else if(e.key === ' ' || e.key === 'Space') keys.Space = false;
         });
         
-        // Botón de reinicio
-        document.getElementById('restartButton').addEventListener('click', () => {
-            restartGame();
-            gameOver = false;
-        });
-        document.getElementById('restartButton').addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            restartGame();
-            gameOver = false;
-        });
+        document.getElementById('restartButton').addEventListener('click', () => { restartGame(); gameOver = false; });
+        document.getElementById('restartButton').addEventListener('touchstart', (e) => { e.preventDefault(); restartGame(); gameOver = false; });
         
-        // Iniciar juego
+        // Inicializar
         restartGame();
+        resizeCanvas();
         updateUI();
+        
         function gameLoop() {
             updateGame();
             draw();
