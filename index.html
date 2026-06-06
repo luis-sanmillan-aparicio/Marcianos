@@ -3,50 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Marcianitos - Adaptado a iPhone</title>
+    <title>Marcianitos HD - Sin selección molesta</title>
     <style>
-        #
-        
-                /* Desactiva selección de texto e imágenes en toda la página */
-        body {
-            user-select: none;
-            -webkit-user-select: none;
-            -webkit-touch-callout: none;
-        }
-        
-        /* Evita que el navegador muestre la lupa / zoom al mantener presionado */
+        /* RESET COMPLETO para eliminar selección en iOS */
         * {
-            touch-action: manipulation;
-            -webkit-tap-highlight-color: transparent;
-        }
-        
-        /* En el canvas específicamente, fuerza que no haya selección ni arrastre nativo */
-        canvas {
-            pointer-events: auto;
-            user-select: none;
-            -webkit-user-drag: none;
+            -webkit-touch-callout: none !important;
+            -webkit-user-select: none !important;
+            -moz-user-select: none !important;
+            user-select: none !important;
+            -webkit-tap-highlight-color: transparent !important;
+            touch-action: none !important;
+            -webkit-user-drag: none !important;
         }
 
-
-
-
-        
-        * {
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
-            touch-action: none;
-        }
-
-        body {
+        html, body {
+            margin: 0;
+            padding: 0;
             background: linear-gradient(145deg, #03050b 0%, #0a0f1f 100%);
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
             font-family: 'Courier New', 'VT323', monospace;
-            margin: 0;
-            padding: 12px;
             touch-action: none;
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+            height: 100%;
         }
 
         .game-wrapper {
@@ -55,28 +38,28 @@
             align-items: center;
             width: 100%;
             max-width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
         }
 
         .game-container {
             background: #000000aa;
-            border-radius: 24px;
+            border-radius: 28px;
             padding: 12px;
             box-shadow: 0 20px 35px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
             backdrop-filter: blur(2px);
-            width: 100%;
-            display: flex;
-            justify-content: center;
         }
 
         canvas {
             display: block;
             margin: 0 auto;
             box-shadow: 0 0 0 3px #2ecc71, 0 0 0 6px #0f380f;
-            border-radius: 8px;
+            border-radius: 12px;
             cursor: none;
-            touch-action: none;
             width: 100%;
             height: auto;
+            /* Eliminar cualquier selección residual */
+            pointer-events: auto;
         }
 
         .info-panel {
@@ -84,25 +67,25 @@
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 12px;
             margin-top: 15px;
-            background: #0c0f1cbb;
-            backdrop-filter: blur(4px);
-            padding: 8px 16px;
+            background: #0c0f1ccc;
+            backdrop-filter: blur(8px);
+            padding: 8px 20px;
             border-radius: 60px;
-            border: 1px solid #2ecc7133;
+            border: 1px solid #2ecc7166;
             color: #c0ffc0;
-            text-shadow: 0 0 5px #1eff00;
+            text-shadow: 0 0 8px #1eff00;
             font-weight: bold;
         }
 
         .score, .lives {
-            font-size: 20px;
-            letter-spacing: 1px;
-            background: #00000066;
-            padding: 4px 12px;
+            font-size: 24px;
+            letter-spacing: 2px;
+            background: #000000aa;
+            padding: 5px 18px;
             border-radius: 40px;
-            display: inline-block;
+            font-family: monospace;
         }
 
         .restart-btn {
@@ -110,12 +93,12 @@
             border: none;
             font-family: 'Courier New', monospace;
             font-weight: bold;
-            font-size: 16px;
-            padding: 5px 14px;
+            font-size: 18px;
+            padding: 6px 18px;
             border-radius: 60px;
             cursor: pointer;
             color: #0a0f1f;
-            transition: all 0.1s ease;
+            transition: 0.05s linear;
             box-shadow: 0 3px 0 #0f380f;
             touch-action: manipulation;
         }
@@ -125,22 +108,21 @@
         }
         
         .controls-tip {
-            font-size: 12px;
-            background: #000000aa;
-            padding: 6px 12px;
+            font-size: 13px;
+            background: #000000cc;
+            padding: 8px 18px;
             border-radius: 50px;
-            display: inline-block;
             text-align: center;
-            margin-top: 10px;
+            margin-top: 12px;
             backdrop-filter: blur(4px);
             font-weight: bold;
+            color: #aaffaa;
         }
         
-        @media (max-width: 550px) {
-            body { padding: 8px; }
-            .score, .lives { font-size: 16px; padding: 3px 10px; }
-            .restart-btn { font-size: 14px; padding: 4px 12px; }
-            .controls-tip { font-size: 10px; }
+        @media (max-width: 650px) {
+            .score, .lives { font-size: 18px; padding: 4px 12px; }
+            .restart-btn { font-size: 14px; padding: 5px 14px; }
+            .controls-tip { font-size: 11px; }
         }
     </style>
 </head>
@@ -155,54 +137,51 @@
         <button class="restart-btn" id="restartButton">🔄 NAVE NUEVA</button>
     </div>
     <div class="controls-tip">
-        🎮 ARRASTRA el dedo → Mueve la nave &nbsp;&nbsp;|&nbsp;&nbsp; 👆 TOCA EN CUALQUIER LUGAR → Disparo
+        🎮 ARRASTRA el dedo → Mueve la nave &nbsp;&nbsp;|&nbsp;&nbsp; 👆 TOCA EN CUALQUIER LUGAR → Disparo láser
     </div>
 </div>
 
 <script>
     (function(){
+        // ---------- ELIMINAR SELECCIÓN Y ZOOM POR JAVASCRIPT (FORTALEZA EXTRA) ----------
+        document.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            // Solo prevenimos si el objetivo NO es un botón de reinicio
+            if(e.target.closest && e.target.closest('#restartButton')) return;
+            // Permitir propagación para el juego
+        }, { passive: false });
+        
+        document.addEventListener('selectstart', (e) => e.preventDefault());
+        document.addEventListener('dragstart', (e) => e.preventDefault());
+        document.body.style.overflow = 'hidden';
+        
         // ---------- CANVAS Y ESCALADO ----------
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         
-        // Dimensiones lógicas del juego (siempre 800x600 internamente)
         const LOGIC_W = 800;
         const LOGIC_H = 600;
+        let scale = 1;
         
-        let scale = 1;      // escala actual
-        let offsetX = 0;     // offset para centrar en pantalla (si hay bordes)
-        
-        // Función que redimensiona el canvas para que quepa en cualquier pantalla manteniendo proporción
         function resizeCanvas() {
             const container = canvas.parentElement;
-            const maxWidth = container.clientWidth - 4;  // pequeño margen
-            const maxHeight = window.innerHeight * 0.7;  // no exceder la altura visible
-            
-            // Calcular escala manteniendo proporción 800/600 = 1.333
+            const maxWidth = Math.min(container.clientWidth - 8, window.innerWidth - 30);
+            const maxHeight = window.innerHeight * 0.65;
             let newScale = Math.min(maxWidth / LOGIC_W, maxHeight / LOGIC_H);
-            newScale = Math.max(0.4, Math.min(1.2, newScale)); // límites razonables
-            
+            newScale = Math.max(0.45, Math.min(1.1, newScale));
             const newWidth = LOGIC_W * newScale;
             const newHeight = LOGIC_H * newScale;
-            
             canvas.style.width = `${newWidth}px`;
             canvas.style.height = `${newHeight}px`;
             canvas.width = LOGIC_W;
             canvas.height = LOGIC_H;
-            
             scale = newScale;
-            // Calcular offset para centrar horizontalmente si es necesario (normalmente sobra espacio)
-            const containerRect = container.getBoundingClientRect();
-            const canvasRect = canvas.getBoundingClientRect();
-            offsetX = (containerRect.width - canvasRect.width) / 2;
-            if(offsetX < 0) offsetX = 0;
         }
         
-        // Escuchar cambios de orientación y resize
         window.addEventListener('resize', () => { resizeCanvas(); });
-        window.addEventListener('orientationchange', () => { setTimeout(resizeCanvas, 50); });
+        window.addEventListener('orientationchange', () => { setTimeout(resizeCanvas, 30); });
         
-        // ---------- CONSTANTES DE JUEGO ----------
+        // ---------- CONSTANTES ----------
         const PLAYER_WIDTH = 36;
         const PLAYER_HEIGHT = 24;
         let playerX = LOGIC_W/2 - PLAYER_WIDTH/2;
@@ -211,15 +190,13 @@
         let score = 0;
         let gameOver = false;
 
-        // Disparos del jugador
         let bullets = [];      
-        const BULLET_W = 4;
+        const BULLET_W = 5;
         const BULLET_H = 12;
-        const BULLET_SPEED = -6;
+        const BULLET_SPEED = -7;
         let shotCooldown = 0;
         const SHOT_DELAY_FRAMES = 10;
 
-        // ----- MARCIANITOS -----
         const INVADER_ROWS = 5;
         const INVADER_COLS = 9;
         let invaders = [];        
@@ -231,40 +208,38 @@
         let invaderOffsetX = 0;
         let invaderOffsetY = 0;
         
-        // Disparos ENEMIGOS
         let enemyBullets = [];     
-        const ENEMY_BULLET_W = 5;
-        const ENEMY_BULLET_H = 10;
-        const ENEMY_BULLET_SPEED = 4;
+        const ENEMY_BULLET_W = 6;
+        const ENEMY_BULLET_H = 12;
+        const ENEMY_BULLET_SPEED = 4.5;
         let enemyShootCooldown = 0;
         const ENEMY_SHOOT_DELAY_BASE = 38;
         
         let explosionFrames = [];
         
-        // ---------- CONTROL TÁCTIL: ARRASTRE Y TOQUE ----------
+        // Controles táctiles
         let touchActive = false;
         let lastTouchX = 0;
         let pendingShoot = false;
         
-        // Teclado (PC)
+        // Teclado PC
         const keys = { ArrowLeft: false, ArrowRight: false, Space: false };
         
-        // Funciones auxiliares
         function updateUI() {
             document.getElementById('scoreValue').innerText = score;
             document.getElementById('livesValue').innerText = lives;
         }
         
         function getInvaderPos(col, row) {
-            const baseX = 70;
-            const baseY = 70;
-            const spacingX = 72;
-            const spacingY = 58;
+            const baseX = 65;
+            const baseY = 65;
+            const spacingX = 74;
+            const spacingY = 60;
             return {
                 x: baseX + col * spacingX + invaderOffsetX,
                 y: baseY + row * spacingY + invaderOffsetY,
-                w: 48,
-                h: 40
+                w: 50,
+                h: 42
             };
         }
         
@@ -311,14 +286,12 @@
             let aliveList = [];
             for(let row=0; row<INVADER_ROWS; row++) {
                 for(let col=0; col<INVADER_COLS; col++) {
-                    if(invaders[row][col]) {
-                        aliveList.push({row, col});
-                    }
+                    if(invaders[row][col]) aliveList.push({row, col});
                 }
             }
             if(aliveList.length === 0) return;
-            const randomIndex = Math.floor(Math.random() * aliveList.length);
-            const inv = aliveList[randomIndex];
+            const rand = Math.floor(Math.random() * aliveList.length);
+            const inv = aliveList[rand];
             const pos = getInvaderPos(inv.col, inv.row);
             enemyBullets.push({
                 x: pos.x + pos.w/2 - ENEMY_BULLET_W/2,
@@ -329,48 +302,37 @@
         }
         
         function rectCollide(r1, r2) {
-            return !(r2.x > r1.x + r1.w ||
-                r2.x + r2.w < r1.x ||
-                r2.y > r1.y + r1.h ||
-                r2.y + r2.h < r1.y);
+            return !(r2.x > r1.x + r1.w || r2.x + r2.w < r1.x ||
+                r2.y > r1.y + r1.h || r2.y + r2.h < r1.y);
         }
         
-        // Conversión de coordenadas de pantalla a lógicas (para el arrastre)
         function screenToLogicX(clientX) {
             const rect = canvas.getBoundingClientRect();
-            // Calculamos la posición relativa dentro del canvas visual
             const relativeX = (clientX - rect.left) / rect.width;
-            // Convertimos a coordenadas lógicas (0 a LOGIC_W)
-            let logicX = relativeX * LOGIC_W;
-            return Math.min(Math.max(logicX, 0), LOGIC_W);
+            return Math.min(Math.max(relativeX * LOGIC_W, 0), LOGIC_W);
         }
         
-        // Lógica principal del juego
         function updateGame() {
             if(gameOver) return;
             
             if(shotCooldown > 0) shotCooldown--;
             if(enemyShootCooldown > 0) enemyShootCooldown--;
             
-            // Movimiento por teclado (PC)
+            // Movimiento por teclado
             let move = 0;
             if(keys.ArrowLeft) move = -1;
             if(keys.ArrowRight) move = 1;
             if(move !== 0) {
-                let speed = 7;
-                let newX = playerX + move * speed;
-                if(newX >= 5 && newX <= LOGIC_W - PLAYER_WIDTH - 5) {
-                    playerX = newX;
-                }
+                let newX = playerX + move * 7;
+                if(newX >= 5 && newX <= LOGIC_W - PLAYER_WIDTH - 5) playerX = newX;
             }
             
-            // Disparo: espacio o toque
             if((keys.Space || pendingShoot) && shotCooldown === 0 && !gameOver) {
                 shootFromPlayer();
                 pendingShoot = false;
             }
             
-            // Mover balas jugador
+            // Balas jugador
             for(let i=0; i<bullets.length; i++) {
                 bullets[i].y += BULLET_SPEED;
                 if(bullets[i].y + BULLET_H < 0 || bullets[i].y > LOGIC_H) {
@@ -387,15 +349,12 @@
                     for(let col=0; col<INVADER_COLS; col++) {
                         if(invaders[row][col]) {
                             const invRect = getInvaderPos(col, row);
-                            if(rectCollide(
-                                {x: bullet.x, y: bullet.y, w: BULLET_W, h: BULLET_H},
-                                invRect
-                            )) {
+                            if(rectCollide({x: bullet.x, y: bullet.y, w: BULLET_W, h: BULLET_H}, invRect)) {
                                 invaders[row][col] = false;
                                 hit = true;
                                 score += 10;
                                 updateUI();
-                                explosionFrames.push({x: invRect.x+invRect.w/2, y: invRect.y+invRect.h/2, timer: 10});
+                                explosionFrames.push({x: invRect.x+invRect.w/2, y: invRect.y+invRect.h/2, timer: 12});
                                 break;
                             }
                         }
@@ -431,16 +390,15 @@
                     }
                 }
                 let needStepDown = false;
-                if(invaderDirection === 1 && maxX >= LOGIC_W - 20) {
+                if(invaderDirection === 1 && maxX >= LOGIC_W - 25) {
                     invaderDirection = -1;
                     needStepDown = true;
-                } else if(invaderDirection === -1 && minX <= 15) {
+                } else if(invaderDirection === -1 && minX <= 20) {
                     invaderDirection = 1;
                     needStepDown = true;
                 }
                 
-                let stepX = invaderDirection * 9;
-                invaderOffsetX += stepX;
+                invaderOffsetX += invaderDirection * 9;
                 if(needStepDown) {
                     invaderOffsetY += 18;
                     invaderSpeed = Math.max(12, invaderSpeed - 1);
@@ -451,10 +409,7 @@
                     for(let col=0; col<INVADER_COLS; col++) {
                         if(invaders[row][col]) {
                             const invPos = getInvaderPos(col, row);
-                            if(invPos.y + invPos.h >= playerY + 12) {
-                                gameOver = true;
-                                return;
-                            }
+                            if(invPos.y + invPos.h >= playerY + 12) gameOver = true;
                         }
                     }
                 }
@@ -464,7 +419,7 @@
             
             if(enemyShootCooldown === 0 && aliveCount > 0 && !gameOver) {
                 enemyShoot();
-                enemyShootCooldown = ENEMY_SHOOT_DELAY_BASE + Math.floor(Math.random() * 15);
+                enemyShootCooldown = ENEMY_SHOOT_DELAY_BASE + Math.floor(Math.random() * 18);
             }
             
             for(let i=0; i<enemyBullets.length; i++) {
@@ -474,17 +429,15 @@
                     i--;
                     continue;
                 }
-                const bullet = enemyBullets[i];
                 const playerRect = {x: playerX, y: playerY, w: PLAYER_WIDTH, h: PLAYER_HEIGHT};
-                if(rectCollide({x: bullet.x, y: bullet.y, w: ENEMY_BULLET_W, h: ENEMY_BULLET_H}, playerRect)) {
+                if(rectCollide({x: enemyBullets[i].x, y: enemyBullets[i].y, w: ENEMY_BULLET_W, h: ENEMY_BULLET_H}, playerRect)) {
                     lives--;
                     updateUI();
                     enemyBullets.splice(i,1);
                     i--;
-                    if(lives <= 0) {
-                        gameOver = true;
-                    } else {
-                        explosionFrames.push({x: playerX+PLAYER_WIDTH/2, y: playerY+PLAYER_HEIGHT/2, timer: 12});
+                    if(lives <= 0) gameOver = true;
+                    else {
+                        explosionFrames.push({x: playerX+PLAYER_WIDTH/2, y: playerY+PLAYER_HEIGHT/2, timer: 14});
                         playerX = LOGIC_W/2 - PLAYER_WIDTH/2;
                     }
                 }
@@ -492,103 +445,120 @@
             
             for(let i=0; i<explosionFrames.length; i++) {
                 explosionFrames[i].timer--;
-                if(explosionFrames[i].timer <= 0) {
-                    explosionFrames.splice(i,1);
-                    i--;
-                }
+                if(explosionFrames[i].timer <= 0) explosionFrames.splice(i,1), i--;
             }
         }
         
-        // Dibujo (coordenadas lógicas)
+        // ---------- DIBUJO MEJORADO (gráficos más brillantes) ----------
         function draw() {
             ctx.clearRect(0, 0, LOGIC_W, LOGIC_H);
-            ctx.fillStyle = "#010008";
+            // Fondo galáctico con estrellas brillantes
+            ctx.fillStyle = "#030318";
             ctx.fillRect(0,0,LOGIC_W,LOGIC_H);
-            ctx.fillStyle = "#ffffff";
-            for(let i=0; i<180; i++) {
-                ctx.fillRect( (i*211)%LOGIC_W, (i*97)%LOGIC_H, 1.5, 1.5);
+            for(let i=0; i<250; i++) {
+                ctx.fillStyle = `rgba(255,255,200,${0.3+Math.random()*0.7})`;
+                ctx.fillRect( (i*131)%LOGIC_W, (i*83)%LOGIC_H, 1.5, 1.5);
             }
             
-            ctx.fillStyle = "#4eff6e";
+            // Nave jugador con detalles
+            ctx.shadowBlur = 8;
+            ctx.shadowColor = "#2eff6e";
+            ctx.fillStyle = "#6eff8e";
             ctx.fillRect(playerX, playerY, PLAYER_WIDTH, PLAYER_HEIGHT);
-            ctx.fillStyle = "#b3ffb3";
+            ctx.fillStyle = "#c0ffc0";
             ctx.fillRect(playerX+6, playerY-6, 24, 8);
-            ctx.fillStyle = "#ffffff";
+            ctx.fillStyle = "#ffffaa";
             ctx.fillRect(playerX+14, playerY-3, 8, 5);
+            ctx.fillStyle = "#ffaa44";
+            ctx.fillRect(playerX+8, playerY+8, 6, 8);
+            ctx.fillRect(playerX+22, playerY+8, 6, 8);
             
+            // Marcianos mejorados
             for(let row=0; row<INVADER_ROWS; row++) {
                 for(let col=0; col<INVADER_COLS; col++) {
                     if(invaders[row][col]) {
                         const pos = getInvaderPos(col, row);
-                        if(row===0) ctx.fillStyle = "#ffc857";
-                        else if(row===1) ctx.fillStyle = "#7eff6e";
-                        else ctx.fillStyle = "#40c94b";
+                        let baseColor, glowColor;
+                        if(row===0) { baseColor = "#ffaa44"; glowColor = "#ffcc77"; }
+                        else if(row===1) { baseColor = "#66ff66"; glowColor = "#aaffaa"; }
+                        else { baseColor = "#44cc55"; glowColor = "#88ff88"; }
+                        
+                        ctx.shadowBlur = 6;
+                        ctx.shadowColor = glowColor;
+                        ctx.fillStyle = baseColor;
                         ctx.fillRect(pos.x, pos.y, pos.w, pos.h);
-                        ctx.fillStyle = "#000000";
-                        ctx.fillRect(pos.x+10, pos.y+12, 8, 8);
-                        ctx.fillRect(pos.x+30, pos.y+12, 8, 8);
-                        ctx.fillStyle = "#ffaa44";
-                        ctx.fillRect(pos.x+20, pos.y+28, 8, 6);
-                        ctx.fillStyle = "#90ff70";
-                        ctx.fillRect(pos.x+22, pos.y-5, 4, 8);
+                        ctx.fillStyle = "#222222";
+                        ctx.fillRect(pos.x+8, pos.y+12, 8, 8);
+                        ctx.fillRect(pos.x+34, pos.y+12, 8, 8);
+                        ctx.fillStyle = "#ff6666";
+                        ctx.fillRect(pos.x+20, pos.y+28, 10, 6);
+                        ctx.fillStyle = "#aaaaff";
+                        ctx.fillRect(pos.x+22, pos.y-4, 6, 8);
+                        // antenas
+                        ctx.fillStyle = glowColor;
+                        ctx.fillRect(pos.x+14, pos.y-2, 4, 6);
+                        ctx.fillRect(pos.x+32, pos.y-2, 4, 6);
                     }
                 }
             }
             
-            ctx.fillStyle = "#ffff60";
+            // Balas jugador láser
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = "#ffff00";
+            ctx.fillStyle = "#ffff88";
             for(let b of bullets) ctx.fillRect(b.x, b.y, BULLET_W, BULLET_H);
-            ctx.fillStyle = "#ff5555";
+            ctx.fillStyle = "#ff6666";
+            ctx.shadowColor = "#ff3300";
             for(let eb of enemyBullets) ctx.fillRect(eb.x, eb.y, ENEMY_BULLET_W, ENEMY_BULLET_H);
             
+            // Explosiones con partículas
             for(let ex of explosionFrames) {
-                ctx.fillStyle = `rgba(255, 140, 30, ${ex.timer/8})`;
+                ctx.shadowBlur = 12;
+                ctx.fillStyle = `rgba(255, 100, 20, ${ex.timer/10})`;
                 ctx.beginPath();
-                ctx.arc(ex.x, ex.y, 12 - (ex.timer/2), 0, Math.PI*2);
+                ctx.arc(ex.x, ex.y, 14 - (ex.timer/1.5), 0, Math.PI*2);
                 ctx.fill();
-                ctx.fillStyle = `rgba(255, 80, 30, 0.9)`;
+                ctx.fillStyle = `rgba(255, 220, 60, ${ex.timer/8})`;
                 ctx.beginPath();
-                ctx.arc(ex.x-2, ex.y-2, 5, 0, Math.PI*2);
+                ctx.arc(ex.x-3, ex.y-2, 7, 0, Math.PI*2);
                 ctx.fill();
             }
             
+            ctx.shadowBlur = 0;
             if(gameOver) {
                 let aliveCount = 0;
                 for(let row=0; row<INVADER_ROWS; row++)
                     for(let col=0; col<INVADER_COLS; col++)
                         if(invaders[row][col]) aliveCount++;
-                let msg = (aliveCount === 0) ? "🌟 ¡VICTORIA! 🌟" : "💀 GAME OVER 💀";
-                ctx.font = "bold 34px monospace";
-                ctx.fillStyle = "#fffdd0";
+                let msg = (aliveCount === 0) ? "🌟 ¡VICTORIA CÓSMICA! 🌟" : "💀 GAME OVER 💀";
+                ctx.font = "bold 32px 'Courier New'";
+                ctx.fillStyle = "#ffffdd";
                 ctx.shadowColor = "black";
-                ctx.fillText(msg, LOGIC_W/2-130, LOGIC_H/2-40);
+                ctx.fillText(msg, LOGIC_W/2-160, LOGIC_H/2-40);
                 ctx.font = "18px monospace";
                 ctx.fillStyle = "#aaffaa";
-                ctx.fillText("Presiona 'NUEVA NAVE'", LOGIC_W/2-100, LOGIC_H/2+30);
+                ctx.fillText("Presiona 'NAVE NUEVA'", LOGIC_W/2-110, LOGIC_H/2+35);
             }
             
-            ctx.font = "bold 16px monospace";
-            ctx.fillStyle = "#b3ffb3";
-            ctx.fillText("👾 INVASORES", 20, 35);
+            ctx.font = "bold 18px monospace";
+            ctx.fillStyle = "#ccffcc";
+            ctx.fillText("👾 INVASORES", 18, 38);
         }
         
-        // ----- EVENTOS TÁCTILES CON COORDENADAS ADAPTADAS -----
-        let touchStartTime = 0;
-        let touchStartLogicX = 0;
-        let hasMovedSignificantly = false;
+        // ----- EVENTOS TÁCTILES (sin selección forzada) -----
+        let touchStartTime = 0, touchStartLogicX = 0, hasMoved = false;
         
         function onTouchStart(e) {
             e.preventDefault();
+            if(e.target.closest && e.target.closest('#restartButton')) return;
             const touch = e.touches[0];
             const logicX = screenToLogicX(touch.clientX);
-            
             touchStartTime = Date.now();
             touchStartLogicX = logicX;
-            hasMovedSignificantly = false;
-            
-            // Posicionar nave directamente bajo el dedo
-            let newPlayerX = logicX - PLAYER_WIDTH/2;
-            newPlayerX = Math.min(Math.max(newPlayerX, 5), LOGIC_W - PLAYER_WIDTH - 5);
-            playerX = newPlayerX;
+            hasMoved = false;
+            let newX = logicX - PLAYER_WIDTH/2;
+            newX = Math.min(Math.max(newX, 5), LOGIC_W - PLAYER_WIDTH - 5);
+            playerX = newX;
             touchActive = true;
             lastTouchX = logicX;
         }
@@ -598,8 +568,8 @@
             if(!touchActive) return;
             const touch = e.touches[0];
             const logicX = screenToLogicX(touch.clientX);
+            if(Math.abs(logicX - lastTouchX) > 4) hasMoved = true;
             let delta = logicX - lastTouchX;
-            if(Math.abs(delta) > 3) hasMovedSignificantly = true;
             let newX = playerX + delta;
             newX = Math.min(Math.max(newX, 5), LOGIC_W - PLAYER_WIDTH - 5);
             playerX = newX;
@@ -610,48 +580,43 @@
             e.preventDefault();
             touchActive = false;
             let duration = Date.now() - touchStartTime;
-            // Si fue un toque rápido sin arrastre significativo → disparo
-            if(!hasMovedSignificantly && duration < 200) {
-                pendingShoot = true;
-            }
+            if(!hasMoved && duration < 200) pendingShoot = true;
         }
         
-        canvas.addEventListener('touchstart', onTouchStart, {passive: false});
-        canvas.addEventListener('touchmove', onTouchMove, {passive: false});
+        canvas.addEventListener('touchstart', onTouchStart, { passive: false });
+        canvas.addEventListener('touchmove', onTouchMove, { passive: false });
         canvas.addEventListener('touchend', onTouchEnd);
         canvas.addEventListener('touchcancel', onTouchEnd);
         
-        // Eventos de ratón para PC/pruebas
-        let mouseDown = false;
-        let mouseMoved = false;
+        // Ratón (pc)
+        let mouseDownFlag = false, mouseMovedFlag = false;
         canvas.addEventListener('mousedown', (e) => {
             e.preventDefault();
             const rect = canvas.getBoundingClientRect();
-            const relativeX = (e.clientX - rect.left) / rect.width;
-            let logicX = relativeX * LOGIC_W;
+            const relX = (e.clientX - rect.left) / rect.width;
+            let logicX = relX * LOGIC_W;
             let newX = logicX - PLAYER_WIDTH/2;
             newX = Math.min(Math.max(newX, 5), LOGIC_W - PLAYER_WIDTH - 5);
             playerX = newX;
-            mouseDown = true;
-            mouseMoved = false;
+            mouseDownFlag = true;
+            mouseMovedFlag = false;
         });
         canvas.addEventListener('mousemove', (e) => {
-            if(mouseDown) {
-                mouseMoved = true;
+            if(mouseDownFlag) {
+                mouseMovedFlag = true;
                 const rect = canvas.getBoundingClientRect();
-                const relativeX = (e.clientX - rect.left) / rect.width;
-                let logicX = relativeX * LOGIC_W;
+                const relX = (e.clientX - rect.left) / rect.width;
+                let logicX = relX * LOGIC_W;
                 let newX = logicX - PLAYER_WIDTH/2;
                 newX = Math.min(Math.max(newX, 5), LOGIC_W - PLAYER_WIDTH - 5);
                 playerX = newX;
             }
         });
         canvas.addEventListener('mouseup', (e) => {
-            if(mouseDown && !mouseMoved) pendingShoot = true;
-            mouseDown = false;
+            if(mouseDownFlag && !mouseMovedFlag) pendingShoot = true;
+            mouseDownFlag = false;
         });
         
-        // Teclado
         window.addEventListener('keydown', (e) => {
             if(e.key === 'ArrowLeft') { keys.ArrowLeft = true; e.preventDefault(); }
             else if(e.key === 'ArrowRight') { keys.ArrowRight = true; e.preventDefault(); }
@@ -666,7 +631,6 @@
         document.getElementById('restartButton').addEventListener('click', () => { restartGame(); gameOver = false; });
         document.getElementById('restartButton').addEventListener('touchstart', (e) => { e.preventDefault(); restartGame(); gameOver = false; });
         
-        // Inicializar
         restartGame();
         resizeCanvas();
         updateUI();
