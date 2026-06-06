@@ -5,6 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Marcianitos - Adaptado a iPhone</title>
     <style>
+        #
+        
+                /* Desactiva selección de texto e imágenes en toda la página */
+        body {
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+        }
+        
+        /* Evita que el navegador muestre la lupa / zoom al mantener presionado */
+        * {
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        /* En el canvas específicamente, fuerza que no haya selección ni arrastre nativo */
+        canvas {
+            pointer-events: auto;
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+
+
+
+
+        
         * {
             user-select: none;
             -webkit-tap-highlight-color: transparent;
