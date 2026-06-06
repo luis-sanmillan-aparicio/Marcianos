@@ -3,17 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Marcianitos Galácticos - Edición Definitiva</title>
+    <title>Marcianitos Galácticos - CON DISPAROS ENEMIGOS</title>
     <style>
-        /* Eliminación total de selecciones y comportamientos nativos molestos */
         * {
             -webkit-touch-callout: none !important;
             -webkit-user-select: none !important;
-            -moz-user-select: none !important;
             user-select: none !important;
             -webkit-tap-highlight-color: transparent !important;
             touch-action: none !important;
-            -webkit-user-drag: none !important;
         }
 
         html, body {
@@ -24,8 +21,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            font-family: 'Courier New', 'VT323', monospace;
-            touch-action: none;
+            font-family: 'Courier New', monospace;
             overflow: hidden;
             position: fixed;
             width: 100%;
@@ -37,7 +33,6 @@
             flex-direction: column;
             align-items: center;
             width: 100%;
-            max-width: 100%;
             padding: 10px;
             box-sizing: border-box;
         }
@@ -46,8 +41,7 @@
             background: rgba(0,0,0,0.7);
             border-radius: 32px;
             padding: 12px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.1);
-            backdrop-filter: blur(3px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
         }
 
         canvas {
@@ -58,7 +52,6 @@
             cursor: none;
             width: 100%;
             height: auto;
-            pointer-events: auto;
         }
 
         .info-panel {
@@ -69,58 +62,48 @@
             gap: 12px;
             margin-top: 16px;
             background: rgba(0,0,0,0.8);
-            backdrop-filter: blur(8px);
             padding: 8px 24px;
             border-radius: 60px;
             border: 1px solid #ffaa55;
             color: #ffffaa;
             text-shadow: 0 0 8px #ffaa44;
-            font-weight: bold;
         }
 
         .score, .lives, .wave {
-            font-size: 22px;
-            letter-spacing: 2px;
+            font-size: 20px;
             background: #000000aa;
             padding: 5px 18px;
             border-radius: 40px;
-            font-family: monospace;
         }
 
         .restart-btn {
             background: #ff8844;
             border: none;
-            font-family: 'Courier New', monospace;
+            font-family: monospace;
             font-weight: bold;
-            font-size: 18px;
+            font-size: 16px;
             padding: 6px 18px;
             border-radius: 60px;
             cursor: pointer;
             color: #1a1a2a;
-            transition: 0.05s linear;
             box-shadow: 0 3px 0 #aa4422;
-            touch-action: manipulation;
         }
         .restart-btn:active {
             transform: translateY(2px);
-            box-shadow: 0 1px 0 #aa4422;
         }
         
         .controls-tip {
-            font-size: 13px;
+            font-size: 12px;
             background: #000000cc;
             padding: 8px 18px;
             border-radius: 50px;
             text-align: center;
             margin-top: 12px;
-            backdrop-filter: blur(4px);
-            font-weight: bold;
             color: #ddffaa;
         }
         
         @media (max-width: 650px) {
-            .score, .lives, .wave { font-size: 16px; padding: 4px 10px; }
-            .restart-btn { font-size: 14px; padding: 5px 14px; }
+            .score, .lives, .wave { font-size: 14px; padding: 4px 10px; }
             .controls-tip { font-size: 10px; }
         }
     </style>
@@ -137,24 +120,21 @@
         <button class="restart-btn" id="restartButton">🔄 NUEVO JUEGO</button>
     </div>
     <div class="controls-tip">
-        🎮 ARRASTRA EL DEDO → Mueve la nave &nbsp;&nbsp;|&nbsp;&nbsp; 👆 TOCA EN CUALQUIER LUGAR → Disparo láser
+        🎮 ARRASTRA EL DEDO → Mueve la nave &nbsp;&nbsp;|&nbsp;&nbsp; 👆 TOCA EN CUALQUIER LUGAR → Disparo
     </div>
 </div>
 
 <script>
     (function(){
-        // ========== PREVENCIÓN EXTRA DE SELECCIÓN ==========
+        // Prevenir selecciones
         document.addEventListener('selectstart', (e) => e.preventDefault());
         document.addEventListener('dragstart', (e) => e.preventDefault());
-        document.body.style.overflow = 'hidden';
         
-        // ========== CANVAS Y ESCALADO ==========
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         
         const LOGIC_W = 800;
         const LOGIC_H = 600;
-        let scale = 1;
         
         function resizeCanvas() {
             const container = canvas.parentElement;
@@ -166,11 +146,10 @@
             canvas.style.height = `${LOGIC_H * newScale}px`;
             canvas.width = LOGIC_W;
             canvas.height = LOGIC_H;
-            scale = newScale;
         }
         
-        window.addEventListener('resize', () => { resizeCanvas(); });
-        window.addEventListener('orientationchange', () => { setTimeout(resizeCanvas, 30); });
+        window.addEventListener('resize', () => resizeCanvas());
+        window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 30));
         
         // ========== CONSTANTES ==========
         const PLAYER_WIDTH = 40;
@@ -182,7 +161,6 @@
         let wave = 1;
         let gameOver = false;
 
-        // Disparos jugador
         let bullets = [];      
         const BULLET_W = 5;
         const BULLET_H = 14;
@@ -190,7 +168,7 @@
         let shotCooldown = 0;
         const SHOT_DELAY_FRAMES = 9;
 
-        // === ESCUDOS ===
+        // Escudos
         let shields = [
             { x: 120, y: LOGIC_H - 100, w: 55, h: 35, health: 3 },
             { x: 280, y: LOGIC_H - 100, w: 55, h: 35, health: 3 },
@@ -198,7 +176,7 @@
             { x: 600, y: LOGIC_H - 100, w: 55, h: 35, health: 3 }
         ];
         
-        // === MARCIANITOS (CALAMARES) ===
+        // MARCIANOS
         const INVADER_ROWS = 5;
         const INVADER_COLS = 8;
         let invaders = [];        
@@ -207,34 +185,29 @@
         let invaderSpeed = 24;
         let invaderOffsetX = 0;
         let invaderOffsetY = 0;
-        let legWiggle = 0;  // animación de patitas
+        let legWiggle = 0;
         
-        // Disparos enemigos
+        // DISPAROS ENEMIGOS - AHORA SEGURO
         let enemyBullets = [];     
         const ENEMY_BULLET_W = 6;
         const ENEMY_BULLET_H = 12;
         const ENEMY_BULLET_SPEED = 4.2;
         let enemyShootCooldown = 0;
         
-        // Efectos visuales mejorados
-        let explosions = [];  // {x, y, timer, type}
+        let explosions = [];
         
-        // Controles táctiles
+        // Controles
         let touchActive = false;
         let lastTouchX = 0;
         let pendingShoot = false;
-        
-        // Teclado
         const keys = { ArrowLeft: false, ArrowRight: false, Space: false };
         
-        // ========== FUNCIONES PRINCIPALES ==========
         function updateUI() {
             document.getElementById('scoreValue').innerText = score;
             document.getElementById('livesValue').innerText = lives;
             document.getElementById('waveValue').innerText = wave;
         }
         
-        // Posición de cada marciano (calamar)
         function getInvaderPos(col, row) {
             const baseX = 60;
             const baseY = 55;
@@ -248,7 +221,6 @@
             };
         }
         
-        // Reinicio completo
         function restartGame() {
             gameOver = false;
             lives = 3;
@@ -259,15 +231,13 @@
             enemyBullets = [];
             explosions = [];
             shotCooldown = 0;
-            enemyShootCooldown = 0;
+            enemyShootCooldown = 5;  // Pequeño retraso inicial
             invaderDirection = 1;
             moveWait = 0;
             invaderSpeed = 24;
             invaderOffsetX = 0;
             invaderOffsetY = 0;
-            legWiggle = 0;
             
-            // Reset shields
             shields = [
                 { x: 120, y: LOGIC_H - 100, w: 55, h: 35, health: 3 },
                 { x: 280, y: LOGIC_H - 100, w: 55, h: 35, health: 3 },
@@ -275,7 +245,6 @@
                 { x: 600, y: LOGIC_H - 100, w: 55, h: 35, health: 3 }
             ];
             
-            // Reset invaders
             invaders = [];
             for(let row = 0; row < INVADER_ROWS; row++) {
                 invaders[row] = [];
@@ -286,7 +255,6 @@
             updateUI();
         }
         
-        // Disparo jugador
         function shootFromPlayer() {
             if(gameOver) return;
             if(shotCooldown > 0) return;
@@ -294,25 +262,33 @@
                 x: playerX + PLAYER_WIDTH/2 - BULLET_W/2,
                 y: playerY - 10,
                 w: BULLET_W,
-                h: BULLET_H,
-                trail: 0
+                h: BULLET_H
             });
             shotCooldown = SHOT_DELAY_FRAMES;
         }
         
-        // Disparo enemigo
+        // DISPARO ENEMIGO - CORREGIDO Y GARANTIZADO
         function enemyShoot() {
             if(gameOver) return;
+            
+            // Recoger todos los invasores vivos
             let aliveList = [];
-            for(let row=0; row<INVADER_ROWS; row++) {
-                for(let col=0; col<INVADER_COLS; col++) {
-                    if(invaders[row][col]) aliveList.push({row, col});
+            for(let row = 0; row < INVADER_ROWS; row++) {
+                for(let col = 0; col < INVADER_COLS; col++) {
+                    if(invaders[row][col]) {
+                        aliveList.push({row, col});
+                    }
                 }
             }
+            
             if(aliveList.length === 0) return;
+            
+            // Elegir un invasor aleatorio
             const rand = Math.floor(Math.random() * aliveList.length);
             const inv = aliveList[rand];
             const pos = getInvaderPos(inv.col, inv.row);
+            
+            // Crear la bala enemiga
             enemyBullets.push({
                 x: pos.x + pos.w/2 - ENEMY_BULLET_W/2,
                 y: pos.y + pos.h - 5,
@@ -336,7 +312,6 @@
             explosions.push({ x, y, timer: 14, type: type });
         }
         
-        // Lógica de oleada: cuando no quedan invasores, sube nivel
         function nextWave() {
             wave++;
             invaderSpeed = Math.max(14, 24 - (wave-1) * 1.5);
@@ -344,7 +319,6 @@
             invaderOffsetY = 0;
             invaderDirection = 1;
             moveWait = 0;
-            // Reiniciar invasores
             invaders = [];
             for(let row = 0; row < INVADER_ROWS; row++) {
                 invaders[row] = [];
@@ -352,18 +326,15 @@
                     invaders[row][col] = true;
                 }
             }
-            // Regenerar escudos un poco
             for(let s of shields) s.health = Math.min(3, s.health + 1);
             updateUI();
         }
         
-        // ========== ACTUALIZACIÓN DEL JUEGO ==========
+        // ========== ACTUALIZACIÓN ==========
         function updateGame() {
             if(gameOver) return;
             
             if(shotCooldown > 0) shotCooldown--;
-            if(enemyShootCooldown > 0) enemyShootCooldown--;
-            legWiggle = (legWiggle + 0.2) % (Math.PI * 2);
             
             // Movimiento teclado
             let move = 0;
@@ -374,7 +345,7 @@
                 if(newX >= 5 && newX <= LOGIC_W - PLAYER_WIDTH - 5) playerX = newX;
             }
             
-            // Disparo
+            // Disparo jugador
             if((keys.Space || pendingShoot) && shotCooldown === 0 && !gameOver) {
                 shootFromPlayer();
                 pendingShoot = false;
@@ -389,7 +360,7 @@
                 }
             }
             
-            // COLISIONES BALAS vs INVASORES
+            // Colisiones balas vs invasores
             for(let i=0; i<bullets.length; i++) {
                 const bullet = bullets[i];
                 let hit = false;
@@ -415,7 +386,7 @@
                 }
             }
             
-            // COLISIONES BALAS vs ESCUDOS
+            // Colisiones balas vs escudos
             for(let i=0; i<bullets.length; i++) {
                 const bullet = bullets[i];
                 for(let s of shields) {
@@ -441,6 +412,8 @@
             }
             
             // Movimiento invasores
+            legWiggle = (legWiggle + 0.2) % (Math.PI * 2);
+            
             if(moveWait <= 0) {
                 let minX = 9999, maxX = -9999;
                 for(let row=0; row<INVADER_ROWS; row++) {
@@ -468,7 +441,6 @@
                 }
                 moveWait = Math.floor(invaderSpeed);
                 
-                // Derrota si tocan la base
                 for(let row=0; row<INVADER_ROWS; row++) {
                     for(let col=0; col<INVADER_COLS; col++) {
                         if(invaders[row][col]) {
@@ -481,14 +453,18 @@
                 moveWait--;
             }
             
-            // Disparos enemigos
-            if(enemyShootCooldown === 0 && aliveCount > 0 && !gameOver) {
+            // ==========================================
+            // DISPAROS ENEMIGOS - CORREGIDO (AHORA FUNCIONA)
+            // ==========================================
+            if(enemyShootCooldown <= 0 && aliveCount > 0 && !gameOver) {
                 enemyShoot();
-                enemyShootCooldown = 40 + Math.floor(Math.random() * 25) - wave * 1.5;
-                if(enemyShootCooldown < 25) enemyShootCooldown = 25;
+                // Frecuencia de disparo: entre 25 y 55 frames
+                enemyShootCooldown = 35 + Math.floor(Math.random() * 40);
+            } else {
+                enemyShootCooldown--;
             }
             
-            // Mover balas enemigas y colisiones con escudos + jugador
+            // Mover balas enemigas y colisiones
             for(let i=0; i<enemyBullets.length; i++) {
                 enemyBullets[i].y += ENEMY_BULLET_SPEED;
                 if(enemyBullets[i].y > LOGIC_H + 50 || enemyBullets[i].y + ENEMY_BULLET_H < 0) {
@@ -497,6 +473,7 @@
                     continue;
                 }
                 
+                // Colisión con escudos
                 let hitShield = false;
                 for(let s of shields) {
                     if(s.health > 0 && rectCollide({x: enemyBullets[i].x, y: enemyBullets[i].y, w: ENEMY_BULLET_W, h: ENEMY_BULLET_H}, {x: s.x, y: s.y, w: s.w, h: s.h})) {
@@ -512,14 +489,16 @@
                     continue;
                 }
                 
+                // Colisión con jugador
                 const playerRect = {x: playerX, y: playerY, w: PLAYER_WIDTH, h: PLAYER_HEIGHT};
                 if(rectCollide({x: enemyBullets[i].x, y: enemyBullets[i].y, w: ENEMY_BULLET_W, h: ENEMY_BULLET_H}, playerRect)) {
                     lives--;
                     updateUI();
                     enemyBullets.splice(i,1);
                     i--;
-                    if(lives <= 0) gameOver = true;
-                    else {
+                    if(lives <= 0) {
+                        gameOver = true;
+                    } else {
                         addExplosion(playerX+PLAYER_WIDTH/2, playerY+PLAYER_HEIGHT/2, 'ship');
                         playerX = LOGIC_W/2 - PLAYER_WIDTH/2;
                     }
@@ -533,26 +512,24 @@
             }
         }
         
-        // ========== DIBUJO MEJORADO (GALACTICO) ==========
+        // ========== DIBUJO ==========
         function draw() {
             ctx.clearRect(0, 0, LOGIC_W, LOGIC_H);
             
-            // Fondo nebuloso + estrellas
+            // Fondo
             const grad = ctx.createLinearGradient(0, 0, 0, LOGIC_H);
             grad.addColorStop(0, "#05051a");
             grad.addColorStop(1, "#0a1030");
             ctx.fillStyle = grad;
             ctx.fillRect(0,0,LOGIC_W,LOGIC_H);
-            for(let i=0; i<300; i++) {
-                ctx.fillStyle = `rgba(255,255,200,${0.2+Math.random()*0.6})`;
+            for(let i=0; i<200; i++) {
+                ctx.fillStyle = `rgba(255,255,200,${0.2+Math.random()*0.5})`;
                 ctx.fillRect( (i*173)%LOGIC_W, (i*91)%LOGIC_H, 1.5, 1.5);
             }
             
-            // ESCUDOS (hexágonos estilizados)
+            // Escudos
             for(let s of shields) {
                 if(s.health > 0) {
-                    ctx.shadowBlur = 6;
-                    ctx.shadowColor = "#44aaff";
                     ctx.fillStyle = `rgba(80, 180, 255, ${0.3 + s.health * 0.15})`;
                     ctx.beginPath();
                     for(let i = 0; i < 6; i++) {
@@ -568,9 +545,7 @@
                 }
             }
             
-            // NAVE JUGADOR (nave detallada con motor)
-            ctx.shadowBlur = 12;
-            ctx.shadowColor = "#44ff88";
+            // Nave
             ctx.fillStyle = "#66ffaa";
             ctx.fillRect(playerX+8, playerY-8, 24, 8);
             ctx.fillStyle = "#44dd88";
@@ -584,64 +559,57 @@
             ctx.fillStyle = "#ffcc44";
             ctx.fillRect(playerX+12, playerY+8, 6, 10);
             ctx.fillRect(playerX+22, playerY+8, 6, 10);
-            // Motor fuego
-            let fireSize = 6 + Math.sin(Date.now() * 0.02) * 2;
             ctx.fillStyle = "#ff7733";
-            ctx.fillRect(playerX+14, playerY+PLAYER_HEIGHT-4, 12, fireSize);
+            ctx.fillRect(playerX+14, playerY+PLAYER_HEIGHT-4, 12, 6);
             
-            // MARCIANOS CALAMAR
+            // Marcianos calamares
             for(let row=0; row<INVADER_ROWS; row++) {
                 for(let col=0; col<INVADER_COLS; col++) {
                     if(invaders[row][col]) {
                         const pos = getInvaderPos(col, row);
-                        let mainColor, eyeColor;
-                        if(row===0) { mainColor = "#ffcc55"; eyeColor = "#ff6666"; }
-                        else if(row===1) { mainColor = "#66ff66"; eyeColor = "#ff8866"; }
-                        else if(row===2) { mainColor = "#44ccff"; eyeColor = "#ffaa66"; }
-                        else if(row===3) { mainColor = "#dd66ff"; eyeColor = "#ffff66"; }
-                        else { mainColor = "#ff6666"; eyeColor = "#ffffff"; }
+                        let mainColor;
+                        if(row===0) mainColor = "#ffcc55";
+                        else if(row===1) mainColor = "#66ff66";
+                        else if(row===2) mainColor = "#44ccff";
+                        else if(row===3) mainColor = "#dd66ff";
+                        else mainColor = "#ff6666";
                         
-                        ctx.shadowBlur = 8;
-                        ctx.shadowColor = mainColor;
                         ctx.fillStyle = mainColor;
-                        // Cuerpo redondeado
                         ctx.beginPath();
                         ctx.ellipse(pos.x+pos.w/2, pos.y+pos.h/2-8, pos.w/2.3, pos.h/2.5, 0, 0, Math.PI*2);
                         ctx.fill();
-                        // Ojos saltones
+                        
                         ctx.fillStyle = "#ffffff";
                         ctx.beginPath();
                         ctx.arc(pos.x+16, pos.y+14, 7, 0, Math.PI*2);
                         ctx.arc(pos.x+pos.w-16, pos.y+14, 7, 0, Math.PI*2);
                         ctx.fill();
-                        ctx.fillStyle = eyeColor;
+                        
+                        ctx.fillStyle = "#ff4444";
                         ctx.beginPath();
                         ctx.arc(pos.x+14 + Math.sin(legWiggle)*2, pos.y+12, 3.5, 0, Math.PI*2);
                         ctx.arc(pos.x+pos.w-18 + Math.cos(legWiggle)*2, pos.y+12, 3.5, 0, Math.PI*2);
                         ctx.fill();
-                        // Patitas (6 tentáculos)
+                        
                         ctx.fillStyle = mainColor;
                         for(let leg=0; leg<6; leg++) {
                             let offset = Math.sin(legWiggle + leg) * 5;
-                            let legX = pos.x + 8 + leg * 9;
-                            ctx.fillRect(legX, pos.y+pos.h-12, 5, 12 + offset);
+                            ctx.fillRect(pos.x + 8 + leg * 9, pos.y+pos.h-12, 5, 12 + offset);
                         }
                         ctx.fillStyle = "#ffaa66";
-                        ctx.fillRect(pos.x+pos.w/2-4, pos.y-6, 8, 8); // antena
+                        ctx.fillRect(pos.x+pos.w/2-4, pos.y-6, 8, 8);
                     }
                 }
             }
             
-            // BALAS láser
-            ctx.shadowBlur = 10;
+            // Balas
             ctx.fillStyle = "#ffff66";
             for(let b of bullets) ctx.fillRect(b.x, b.y, BULLET_W, BULLET_H);
             ctx.fillStyle = "#ff4444";
             for(let eb of enemyBullets) ctx.fillRect(eb.x, eb.y, ENEMY_BULLET_W, ENEMY_BULLET_H);
             
-            // EXPLOSIONES con anillos
+            // Explosiones
             for(let ex of explosions) {
-                ctx.shadowBlur = 12;
                 let radius = 12 - (ex.timer/1.8);
                 ctx.fillStyle = `rgba(255, 80, 30, ${ex.timer/10})`;
                 ctx.beginPath();
@@ -651,22 +619,12 @@
                 ctx.beginPath();
                 ctx.arc(ex.x-3, ex.y-2, radius*0.6, 0, Math.PI*2);
                 ctx.fill();
-                if(ex.type === 'big') {
-                    ctx.strokeStyle = `rgba(255,100,0,0.8)`;
-                    ctx.lineWidth = 3;
-                    ctx.beginPath();
-                    ctx.arc(ex.x, ex.y, radius+4, 0, Math.PI*2);
-                    ctx.stroke();
-                }
             }
             
-            ctx.shadowBlur = 0;
             if(gameOver) {
-                let msg = "💀 GAME OVER 💀";
                 ctx.font = "bold 34px 'Courier New'";
                 ctx.fillStyle = "#ffccaa";
-                ctx.shadowColor = "black";
-                ctx.fillText(msg, LOGIC_W/2-130, LOGIC_H/2-40);
+                ctx.fillText("💀 GAME OVER 💀", LOGIC_W/2-130, LOGIC_H/2-40);
                 ctx.font = "18px monospace";
                 ctx.fillStyle = "#aaffaa";
                 ctx.fillText("Presiona 'NUEVO JUEGO'", LOGIC_W/2-120, LOGIC_H/2+40);
@@ -677,7 +635,7 @@
             ctx.fillText("👾 INVASORES", 20, 40);
         }
         
-        // ========== CONTROLES TÁCTILES (SIN SELECCIÓN) ==========
+        // ========== CONTROLES TÁCTILES ==========
         let touchStartTime = 0, hasMoved = false;
         
         function onTouchStart(e) {
@@ -719,7 +677,7 @@
         canvas.addEventListener('touchend', onTouchEnd);
         canvas.addEventListener('touchcancel', onTouchEnd);
         
-        // Ratón (pc)
+        // Ratón
         let mouseDownFlag = false, mouseMovedFlag = false;
         canvas.addEventListener('mousedown', (e) => {
             e.preventDefault();
@@ -748,6 +706,7 @@
             mouseDownFlag = false;
         });
         
+        // Teclado
         window.addEventListener('keydown', (e) => {
             if(e.key === 'ArrowLeft') { keys.ArrowLeft = true; e.preventDefault(); }
             else if(e.key === 'ArrowRight') { keys.ArrowRight = true; e.preventDefault(); }
@@ -759,8 +718,8 @@
             else if(e.key === ' ' || e.key === 'Space') keys.Space = false;
         });
         
-        document.getElementById('restartButton').addEventListener('click', () => { restartGame(); gameOver = false; });
-        document.getElementById('restartButton').addEventListener('touchstart', (e) => { e.preventDefault(); restartGame(); gameOver = false; });
+        document.getElementById('restartButton').addEventListener('click', () => { restartGame(); });
+        document.getElementById('restartButton').addEventListener('touchstart', (e) => { e.preventDefault(); restartGame(); });
         
         restartGame();
         resizeCanvas();
